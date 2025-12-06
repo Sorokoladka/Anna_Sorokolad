@@ -1,4 +1,5 @@
 import os
+import tqdm
 import pandas as pd
 import numpy as np
 from rank_bm25 import BM25Okapi
@@ -13,7 +14,8 @@ from scipy.spatial.distance import cosine, euclidean, sqeuclidean
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-from nltk.stem import PorterStemmer  # или использовать lemmatizer
+from nltk.stem import PorterStemmer
+
 
 def load_data(train_path, test_path):
     """Загружает тренировочные и тестовые данные."""
@@ -82,7 +84,7 @@ def get_cross_encoder_scores(df, tokenizer, model, device, batch_size=16):
     print("Получение предсказаний кросс-энкодера...")
     texts = list(zip(df['query'], df['combined_product_text']))
     scores = []
-    for i in range(0, len(texts), batch_size):
+    for i in tqdm.tqdm(range(0, len(texts), batch_size)):
         batch = texts[i:i + batch_size]
         inputs = tokenizer(batch, padding=True, truncation=True, return_tensors='pt', max_length=512)
         inputs.to(device)
@@ -177,7 +179,7 @@ def main():
         emb_features_train,
         text_features_train,
         np.array(ce_scores_train).reshape(-1, 1),
-        filtered_train_df[['bm25_score']].values  # Добавляем BM25 как признак
+        filtered_train_df[['bm25_score']].values
     ])
     y_train = filtered_train_df['relevance'].values
     group_id_train = filtered_train_df['query_id'].values
@@ -202,10 +204,9 @@ def main():
         iterations=200,
         learning_rate=0.05,
         depth=8,
-        loss_function='YetiRank',  # или LambdaMART
+        loss_function='YetiRank',
         eval_metric='NDCG',
-        verbose=50,
-        # task_type='GPU' # Если доступен
+        verbose=50
     )
     model.fit(train_pool)
 
