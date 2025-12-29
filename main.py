@@ -188,7 +188,7 @@ def main():
         'price_p05': p05,
         'price_p95': p95
     })
-    submission.to_csv('submission.csv', index=False)
+    submission.to_csv('results/submission.csv', index=False)
     print("✅ Submission saved to 'submission.csv'")
 
 
